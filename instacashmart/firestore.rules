@@ -1,0 +1,103 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
+    function ownsExistingDocument() {
+      return signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    function ownsNewDocument() {
+      return signedIn() && request.resource.data.ownerUid == request.auth.uid;
+    }
+
+    function isPublished() {
+      return resource.data.get("isPublished", false) == true;
+    }
+
+    function isApproved() {
+      return resource.data.get("status", "") == "approved";
+    }
+
+    // Customer sell orders, accessory orders, and vehicle enquiries.
+    // Customers can submit and read their own records; only admins can
+    // change or remove records after submission.
+    match /sell/{documentId} {
+      allow create: if ownsNewDocument();
+      allow get, list: if isAdmin() || ownsExistingDocument();
+      allow update, delete: if isAdmin();
+    }
+
+    match /buy/{documentId} {
+      allow create: if ownsNewDocument();
+      allow get, list: if isAdmin() || ownsExistingDocument();
+      allow update, delete: if isAdmin();
+    }
+
+    match /vehicleLeads/{documentId} {
+      allow create: if ownsNewDocument();
+      allow get, list: if isAdmin() || ownsExistingDocument();
+      allow update, delete: if isAdmin();
+    }
+
+    // Public catalog and site content. Bikes and cars are currently stored
+    // in vehicleProducts with a type field; vehicles are seller listings.
+    match /products/{documentId} {
+      allow read: if isAdmin() || isPublished();
+      allow write: if isAdmin();
+    }
+
+    match /sellModels/{documentId} {
+      allow read: if isAdmin() || isPublished();
+      allow write: if isAdmin();
+    }
+
+    match /popular/{documentId} {
+      allow read: if isAdmin() || isPublished();
+      allow write: if isAdmin();
+    }
+
+    match /trending/{documentId} {
+      allow read: if isAdmin() || isPublished();
+      allow write: if isAdmin();
+    }
+
+    match /vehicleProducts/{documentId} {
+      allow read: if isAdmin() || isPublished();
+      allow write: if isAdmin();
+    }
+
+    match /vehicles/{documentId} {
+      allow create: if ownsNewDocument()
+        && request.resource.data.get("isPublished", false) == false;
+      allow get, list: if isAdmin() || ownsExistingDocument() || isPublished();
+      allow update, delete: if isAdmin();
+    }
+
+    // Customers can submit feedback/reviews. Admins moderate them by setting
+    // status to "approved"; only approved entries are public.
+    match /feedback/{documentId} {
+      allow create: if ownsNewDocument();
+      allow get, list: if isAdmin() || ownsExistingDocument() || isApproved();
+      allow update, delete: if isAdmin();
+    }
+
+    match /reviews/{documentId} {
+      allow create: if ownsNewDocument();
+      allow get, list: if isAdmin() || ownsExistingDocument() || isApproved();
+      allow update, delete: if isAdmin();
+    }
+
+    // Unknown collections are private unless explicitly added above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

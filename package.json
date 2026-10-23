@@ -1,0 +1,11 @@
+{
+  "name": "instammart-root",
+  "private": true,
+  "description": "Runs the React app in ./instacashmart from this folder.",
+  "scripts": {
+    "postinstall": "npm install --prefix instacashmart",
+    "dev": "npm run dev --prefix instacashmart",
+    "build": "npm run build --prefix instacashmart",
+    "preview": "npm run preview --prefix instacashmart"
+  }
+}

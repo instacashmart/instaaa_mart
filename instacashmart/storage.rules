@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
+    function isValidImage() {
+      return request.resource != null
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches("image/.*");
+    }
+
+    // Public images for products, models, accessories, and approved listings.
+    // Only admins can publish, replace, or remove files in this folder.
+    match /public/{filePath=**} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidImage();
+      allow delete: if isAdmin();
+    }
+
+    // Private customer-uploaded photos (for example, sell-order evidence).
+    // Customers can access only their own folder; admins can manage all files.
+    match /private/{userId}/{filePath=**} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == userId);
+      allow create, update: if isValidImage()
+        && (isAdmin() || (signedIn() && request.auth.uid == userId));
+      allow delete: if isAdmin() || (signedIn() && request.auth.uid == userId);
+    }
+
+    // No access to files outside the explicitly defined folders.
+    match /{filePath=**} {
+      allow read, write: if false;
+    }
+  }
+}
