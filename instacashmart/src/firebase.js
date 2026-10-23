@@ -22,12 +22,15 @@ const requiredConfig = [
 
 const missingConfig = requiredConfig.filter((key) => !firebaseConfig[key]);
 
-if (missingConfig.length > 0) {
-  throw new Error(
-    `Missing Firebase configuration: ${missingConfig.join(", ")}. ` +
-      "Set the corresponding VITE_FIREBASE_* variables in your .env file.",
+export const app =
+  missingConfig.length === 0 ? initializeApp(firebaseConfig) : null;
+
+if (!app) {
+  console.error(
+    `Firebase is disabled because configuration is missing: ${missingConfig.join(", ")}. ` +
+      "Set the corresponding VITE_FIREBASE_* variables in the deployment environment.",
   );
 }
 
-const app = initializeApp(firebaseConfig);
-export const analytics = getAnalytics(app);
+export const analytics =
+  app && firebaseConfig.measurementId ? getAnalytics(app) : null;

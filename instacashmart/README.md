@@ -13,6 +13,9 @@ Copy `.env.example` to `.env` and fill in your Firebase web app configuration. T
 Firebase Analytics measurement ID is optional; the other values are required.
 For deployments, add the same `VITE_FIREBASE_*` variables to the hosting
 provider's environment settings before building.
+If Firebase variables are missing in production, the website still loads and
+logs an explicit error while Firebase services remain disabled until the
+variables are set.
 
 ```bash
 npm install
@@ -29,7 +32,7 @@ Firebase security rules for any services you enable.
 
 ```
 src/
-  main.jsx               app entry (HashRouter)
+  main.jsx               app entry (BrowserRouter)
   App.jsx                routes, page titles, scroll handling
   index.css              Tailwind + custom styles (reveal animations, intro, bottom nav)
   context/AppContext.jsx global state: toast, city, login, modals, catalog, store filters
