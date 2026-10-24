@@ -15,6 +15,8 @@ export function PickupPage() {
   const [n, setN] = useState("");
   const [f, setF] = useState(todayISO);
   const [x, setX] = useState(null);
+  const [saveError, setSaveError] = useState("");
+  const [saving, setSaving] = useState(false);
   const l = t("cat");
   const j = sellCategory(l);
   const w = [t("storage"), t("ram") && `${t("ram")} RAM`]
@@ -32,26 +34,35 @@ export function PickupPage() {
     ["Extra Details", t("extra")],
   ].filter(([K, R]) => R || K === "Variant / Colour" || K === "Extra Details");
   const u = `/sell${l ? `?cat=${encodeURIComponent(l)}` : ""}`;
-  const H = (K) => {
+  const H = async (K) => {
     K.preventDefault();
     const R = store.newId("CN");
-    store.add("sell", {
-      id: R,
-      createdAt: new Date().toISOString(),
-      category: l,
-      model: t("model"),
-      storage: t("storage"),
-      ram: t("ram"),
-      variant: t("variant"),
-      extra: t("extra"),
-      condition: t("condition"),
-      accessories: t("accessories"),
-      quote: Number(t("price")) || 0,
-      address: r.trim(),
-      phone: n,
-      date: f,
-      status: "New",
-    });
+    setSaving(true);
+    setSaveError("");
+    try {
+      await store.addAndWait("sell", {
+        id: R,
+        createdAt: new Date().toISOString(),
+        category: l,
+        model: t("model"),
+        storage: t("storage"),
+        ram: t("ram"),
+        variant: t("variant"),
+        extra: t("extra"),
+        condition: t("condition"),
+        accessories: t("accessories"),
+        quote: Number(t("price")) || 0,
+        address: r.trim(),
+        phone: n,
+        date: f,
+        status: "New",
+      });
+    } catch (error) {
+      setSaveError(error.message);
+      setSaving(false);
+      return;
+    }
+    setSaving(false);
     setX({
       id: R,
       date: f,
@@ -236,11 +247,17 @@ export function PickupPage() {
             </div>
             <button
               type="submit"
+              disabled={saving}
               className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm py-3.5 rounded-xl shadow-lg shadow-brand-500/20 transition flex items-center justify-center gap-2"
             >
-              <span>Confirm</span>
+              <span>{saving ? "Saving…" : "Confirm"}</span>
               <i className="fa-solid fa-circle-check" />
             </button>
+            {saveError && (
+              <p role="alert" className="text-xs font-semibold text-red-700">
+                {saveError}
+              </p>
+            )}
           </form>
         )}
       </main>

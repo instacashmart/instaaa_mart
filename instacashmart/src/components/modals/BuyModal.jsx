@@ -54,6 +54,8 @@ export function BuyModal() {
   const [n, setN] = useState(EMPTY_CHECKOUT);
   const [f, setF] = useState("");
   const [x, setX] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [saving, setSaving] = useState(false);
   const l = modal === "buy" && !!buyProduct;
   useEffect(() => {
     if (l) {
@@ -69,23 +71,32 @@ export function BuyModal() {
       ...u,
       [F]: p.target.value,
     }));
-  const w = (F) => {
+  const w = async (F) => {
     F.preventDefault();
     const p = store.newId("CNB");
-    store.add("buy", {
-      id: p,
-      createdAt: new Date().toISOString(),
-      product: buyProduct.name,
-      category: categoryLabel(buyProduct.category),
-      price: buyProduct.price,
-      seller: sellerOf(buyProduct).name,
-      name: n.name.trim(),
-      phone: n.phone.trim(),
-      address: n.address.trim(),
-      pincode: n.pincode.trim(),
-      payment: n.payment,
-      status: "New",
-    });
+    setSaving(true);
+    setSaveError("");
+    try {
+      await store.addAndWait("buy", {
+        id: p,
+        createdAt: new Date().toISOString(),
+        product: buyProduct.name,
+        category: categoryLabel(buyProduct.category),
+        price: buyProduct.price,
+        seller: sellerOf(buyProduct).name,
+        name: n.name.trim(),
+        phone: n.phone.trim(),
+        address: n.address.trim(),
+        pincode: n.pincode.trim(),
+        payment: n.payment,
+        status: "New",
+      });
+    } catch (error) {
+      setSaveError(error.message);
+      setSaving(false);
+      return;
+    }
+    setSaving(false);
     setF(p);
     showToast("Order placed! Delivery in 2-4 business days.");
   };
@@ -151,6 +162,11 @@ export function BuyModal() {
           </div>
         ) : (
           <form onSubmit={w} className="space-y-4 mt-5">
+            {saveError && (
+              <p role="alert" className="text-xs font-semibold text-red-700">
+                {saveError}
+              </p>
+            )}
             <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 flex items-center gap-3">
               <span className="shrink-0">
                 <ProductThumb
@@ -284,9 +300,10 @@ export function BuyModal() {
             </div>
             <button
               type="submit"
+              disabled={saving}
               className="w-full mt-4 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm py-3.5 rounded-xl shadow-lg shadow-brand-500/20 transition flex items-center justify-center gap-2"
             >
-              <span>Place Order</span>
+              <span>{saving ? "Saving…" : "Place Order"}</span>
               <i className="fa-solid fa-circle-check" />
             </button>
             <p className="text-[10px] text-center text-slate-400">

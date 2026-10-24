@@ -8,7 +8,7 @@ import {
 import { store } from "../../lib/store";
 import { EmptyState, phoneLink } from "./shared";
 
-const LISTING_STATUSES = ["Live", "Sold", "Hidden"];
+const LISTING_STATUSES = ["Pending", "Live", "Sold", "Hidden"];
 
 const LEAD_STATUSES = ["New", "Contacted", "Closed"];
 

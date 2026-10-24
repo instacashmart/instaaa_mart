@@ -12,7 +12,7 @@ import {
   ACCESSORY_CATEGORIES,
   makeProduct,
 } from "../data/accessories";
-import { useStoreList } from "../lib/store";
+import { useFirestoreErrors, useStoreList } from "../lib/store";
 
 const AppContext = createContext(null);
 
@@ -38,6 +38,7 @@ export function AppProvider({ children }) {
       3500,
     );
   }, []);
+  useFirestoreErrors(showToast);
   const [i, setI] = useState("Bengaluru");
   const [user, setUser] = useState(null);
   const [modal, setModal] = useState(null);

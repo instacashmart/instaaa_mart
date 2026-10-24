@@ -44,8 +44,10 @@ src/
   assets/                images (models, accessories, brand logos, categories)
 ```
 
-All data (orders, feedback, reviews, admin edits) is stored in the browser's `localStorage`
-under keys starting with `cashnova.`. The admin panel is at `/admin`.
+The app keeps a browser cache under keys starting with `cashnova.` and synchronizes
+Firestore-backed collections when Firebase is configured. Customer submissions are
+written to Firestore and tagged with the signed-in user's `ownerUid`; reads are
+scoped to that owner or to published/approved documents. The admin panel is at `/admin`.
 
 ## Firebase security rules
 
@@ -55,21 +57,29 @@ storage keys: `sell`, `buy`, `products`, `sellModels`, `popular`, `trending`,
 `feedback`, `reviews`, `vehicleProducts`, `vehicles`, and `vehicleLeads`.
 Bike and car catalog entries use `vehicleProducts` with a `type` field.
 
-The rules require Firebase Authentication. Customer-created documents must
-include `ownerUid` set to the authenticated user's UID. Set the Firebase Auth
-custom claim `admin: true` for each trusted admin using a secure server-side
-Firebase Admin SDK process; never grant admin claims from browser code. Public
-catalog entries need `isPublished: true`, while feedback and reviews become
-public only after an admin sets `status: "approved"`. Firestore queries for
-public content or a user's own orders must include the corresponding
-`isPublished`, `status`, or `ownerUid` filter so they satisfy the rules.
+The app signs customers in anonymously before customer submissions, so enable
+**Authentication → Sign-in method → Anonymous** in Firebase. The rules require
+authenticated requests and customer-created documents include `ownerUid` set to
+the authenticated user's UID. The anonymous identity persists in the same browser;
+it is not a phone-number account and does not transfer to another device. Existing
+browser-only records are preserved under `cashnova.firestoreBackup.<collection>`
+when that collection first syncs; they are not automatically uploaded.
+
+Set the Firebase Auth custom claim `admin: true` for trusted admins using a
+secure server-side Firebase Admin SDK process, or add their exact Firebase UID
+to the `isAdmin()` allowlist in `firestore.rules` and the `ADMIN_UIDS` set in
+`src/firebase.js`. Never grant admin claims from browser code. The current
+deployment allowlists one supplied UID; deploy the updated rules for Firestore
+to honor it. Public catalog
+entries need `isPublished: true`, while customer feedback and reviews stay pending
+until an admin approves them with `status: "approved"`. Firestore queries for
+public content or a user's own records include the corresponding `isPublished`,
+`status`, or `ownerUid` filter to satisfy the rules.
 
 Storage uploads are limited to images smaller than 10 MB. Admin-published
 images belong under `public/`; customer-only uploads belong under
-`private/{uid}/`. The current React admin panel still uses `localStorage`:
-deploying these rules does not migrate its data or connect the UI to Firestore
-or Storage. Add Firebase Auth and Firestore/Storage operations to the app before
-expecting the panel to read or write cloud data.
+`private/{uid}/`. Vehicle photos and admin catalog images currently use
+compressed data URLs rather than Firebase Storage uploads.
 
 Deploy the rules from this directory with the Firebase CLI:
 

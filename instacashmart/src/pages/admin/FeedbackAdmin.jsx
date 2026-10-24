@@ -21,6 +21,11 @@ export function FeedbackAdmin({ feedback, showToast }) {
       n.hidden ? "Shown on Customer Reviews" : "Hidden from Customer Reviews",
     );
   };
+  const approve = (n) => {
+    const status = n.status === "approved" ? "pending" : "approved";
+    store.update("feedback", n.id, { status });
+    showToast(status === "approved" ? "Feedback approved" : "Approval removed");
+  };
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -61,6 +66,11 @@ export function FeedbackAdmin({ feedback, showToast }) {
                     <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
                       {n.topic}
                     </span>
+                    {n.public && n.status !== "approved" && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">
+                        Pending approval
+                      </span>
+                    )}
                     {n.public ? (
                       n.hidden ? (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-700">
@@ -98,13 +108,24 @@ export function FeedbackAdmin({ feedback, showToast }) {
                 </div>
                 <div className="flex items-center gap-2">
                   {n.public && (
-                    <button
-                      type="button"
-                      onClick={() => a(n)}
-                      className="px-3 h-8 rounded-lg border border-slate-300 text-xs font-bold text-slate-900 hover:border-slate-900 transition"
-                    >
-                      {n.hidden ? "Show on reviews" : "Hide from reviews"}
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => approve(n)}
+                        className="px-3 h-8 rounded-lg border border-slate-300 text-xs font-bold text-slate-900 hover:border-slate-900 transition"
+                      >
+                        {n.status === "approved" ? "Unapprove" : "Approve"}
+                      </button>
+                      {n.status === "approved" && (
+                        <button
+                          type="button"
+                          onClick={() => a(n)}
+                          className="px-3 h-8 rounded-lg border border-slate-300 text-xs font-bold text-slate-900 hover:border-slate-900 transition"
+                        >
+                          {n.hidden ? "Show on reviews" : "Hide from reviews"}
+                        </button>
+                      )}
+                    </>
                   )}
                   <button
                     type="button"

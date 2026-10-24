@@ -111,6 +111,8 @@ export function SellVehiclePage() {
     ...vehicleFormFromParams(r),
   }));
   const [i, setI] = useState(null);
+  const [saveError, setSaveError] = useState("");
+  const [saving, setSaving] = useState(false);
   const PRef = useRef(null);
   const x = (U) => (B) =>
     setA((h) => ({
@@ -165,7 +167,7 @@ export function SellVehiclePage() {
       }
     }
   };
-  const R = (U) => {
+  const R = async (U) => {
     U.preventDefault();
     if (!w || !F) {
       showToast("Please choose the brand and model");
@@ -174,7 +176,7 @@ export function SellVehiclePage() {
     const h = {
       id: store.newId("CNV"),
       createdAt: new Date().toISOString(),
-      status: "Live",
+      status: "Pending",
       type: a.type,
       brand: w,
       model: F,
@@ -193,15 +195,21 @@ export function SellVehiclePage() {
       sellerName: a.name.trim(),
       phone: a.phone.trim(),
     };
-    if (!store.add("vehicles", h)) {
-      showToast("Could not save your listing. Try a smaller photo.");
+    setSaving(true);
+    setSaveError("");
+    try {
+      await store.addAndWait("vehicles", h);
+    } catch (error) {
+      setSaveError(error.message);
+      setSaving(false);
       return;
     }
+    setSaving(false);
     setI(h);
     window.scrollTo({
       top: 0,
     });
-    showToast("Your listing is live!");
+    showToast("Your listing was submitted for review.");
   };
   if (i) {
     return (
@@ -212,7 +220,7 @@ export function SellVehiclePage() {
             <i className="fa-solid fa-check" />
           </div>
           <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
-            Your {vehicleType(i.type).short.toLowerCase()} is listed!
+            Your {vehicleType(i.type).short.toLowerCase()} listing was submitted!
           </h1>
           <p className="text-sm text-slate-600 mt-2">
             <span className="font-bold">
@@ -224,14 +232,14 @@ export function SellVehiclePage() {
           <p className="text-xs text-slate-500 mt-1">
             Listing ID:{" "}
             <strong className="text-brand-700 font-mono">{i.id}</strong> •
-            Buyers will call you on +91 {i.phone}
+            We will review it before it appears publicly.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
               to={i.type === "car" ? "/bikes-cars?type=car" : "/bikes-cars"}
               className="px-5 py-2.5 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition"
             >
-              See it in listings
+              Browse Listings
             </Link>
             <button
               type="button"
@@ -265,7 +273,7 @@ export function SellVehiclePage() {
               Sell Your Bike or Car
             </h1>
             <p className="text-sm text-slate-500 mt-1">
-              Get an instant price estimate and post your listing for free
+              Get an instant price estimate and submit your listing for review
             </p>
           </div>
           <div>
@@ -609,11 +617,17 @@ export function SellVehiclePage() {
               />
             </div>
           </div>
+          {saveError && (
+            <p role="alert" className="text-xs font-semibold text-red-700">
+              {saveError}
+            </p>
+          )}
           <button
             type="submit"
+            disabled={saving}
             className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm py-3.5 rounded-xl shadow-lg shadow-brand-500/20 transition flex items-center justify-center gap-2"
           >
-            <span>Post Listing</span>
+            <span>{saving ? "Saving…" : "Post Listing"}</span>
             <i className="fa-solid fa-arrow-right" />
           </button>
         </form>

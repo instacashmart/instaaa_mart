@@ -20,7 +20,10 @@ function usePublicFeedback() {
   const A = useStoreList("feedback");
   return useMemo(
     () =>
-      A.filter((e) => e.public && !e.hidden && e.message).map((e, t) => ({
+      A.filter(
+        (e) =>
+          e.status === "approved" && e.public && !e.hidden && e.message,
+      ).map((e, t) => ({
         key: e.id,
         name: e.name || "Customer",
         initials: initialsOf(e.name),

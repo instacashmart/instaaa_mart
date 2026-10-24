@@ -13,6 +13,11 @@ export function ReviewsAdmin({ reviews, showToast }) {
       showToast("Review deleted");
     }
   };
+  const approve = (review) => {
+    const status = review.status === "approved" ? "pending" : "approved";
+    store.update("reviews", review.id, { status });
+    showToast(status === "approved" ? "Review approved" : "Approval removed");
+  };
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
       <h2 className="text-base font-bold text-slate-900">Product Reviews</h2>
@@ -48,6 +53,13 @@ export function ReviewsAdmin({ reviews, showToast }) {
                     )}
                   </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => approve(r)}
+                  className="px-3 h-8 rounded-lg border border-slate-300 text-xs font-bold text-slate-900 hover:border-slate-900 transition"
+                >
+                  {r.status === "approved" ? "Unapprove" : "Approve"}
+                </button>
                 <button
                   type="button"
                   onClick={() => t(r)}

@@ -27,7 +27,9 @@ export function useProductReviews(product) {
       };
     }
     const t = productKey(product);
-    const r = e.filter((n) => n.productKey === t);
+    const r = e.filter(
+      (n) => n.productKey === t && n.status === "approved",
+    );
     const avg = r.length
       ? r.reduce((acc, item) => acc + Number(item.rating), 0) / r.length
       : 0;

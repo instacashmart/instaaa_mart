@@ -45,16 +45,18 @@ export function ContactSellerModal({ vehicle, onClose }) {
     message: "",
   });
   const [P, setP] = useState("");
+  const [saveError, setSaveError] = useState("");
   const c = (j) => (w) =>
     setI((F) => ({
       ...F,
       [j]: w.target.value,
     }));
-  const l = (j) => {
+  const l = async (j) => {
     j.preventDefault();
     const w = store.newId("CNL");
-    if (
-      !store.add("vehicleLeads", {
+    setSaveError("");
+    try {
+      await store.addAndWait("vehicleLeads", {
         id: w,
         createdAt: new Date().toISOString(),
         vehicleId: vehicle.id,
@@ -71,9 +73,9 @@ export function ContactSellerModal({ vehicle, onClose }) {
         offer: i.purpose === "offer" ? Number(i.offer) : "",
         message: i.message.trim(),
         status: "New",
-      })
-    ) {
-      showToast("Could not send your request. Please try again.");
+      });
+    } catch (error) {
+      setSaveError(error.message);
       return;
     }
     setP(w);
@@ -154,6 +156,11 @@ export function ContactSellerModal({ vehicle, onClose }) {
         </div>
       ) : (
         <form onSubmit={l} className="space-y-4 mt-4">
+          {saveError && (
+            <p role="alert" className="text-xs font-semibold text-red-700">
+              {saveError}
+            </p>
+          )}
           <details className="group rounded-2xl border border-slate-200 px-3.5 py-3">
             <summary className="flex items-center justify-between cursor-pointer list-none text-xs font-bold text-slate-900">
               <span>

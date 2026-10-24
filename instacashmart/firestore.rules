@@ -7,7 +7,9 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return signedIn() && request.auth.token.admin == true;
+      return signedIn()
+        && (request.auth.token.get("admin", false) == true
+          || request.auth.uid == "fi22m7IJbFbjNllzZvBiGz0OMZs2");
     }
 
     function ownsExistingDocument() {
@@ -84,13 +86,15 @@ service cloud.firestore {
     // Customers can submit feedback/reviews. Admins moderate them by setting
     // status to "approved"; only approved entries are public.
     match /feedback/{documentId} {
-      allow create: if ownsNewDocument();
+      allow create: if ownsNewDocument()
+        && request.resource.data.get("status", "pending") == "pending";
       allow get, list: if isAdmin() || ownsExistingDocument() || isApproved();
       allow update, delete: if isAdmin();
     }
 
     match /reviews/{documentId} {
-      allow create: if ownsNewDocument();
+      allow create: if ownsNewDocument()
+        && request.resource.data.get("status", "pending") == "pending";
       allow get, list: if isAdmin() || ownsExistingDocument() || isApproved();
       allow update, delete: if isAdmin();
     }

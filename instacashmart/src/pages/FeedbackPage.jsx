@@ -44,15 +44,15 @@ export function FeedbackPage() {
       ...w,
       [l]: j.target.value,
     }));
-  const x = (l) => {
+  const x = async (l) => {
     l.preventDefault();
     if (!A.rating) {
       setI("Please choose a star rating.");
       return;
     }
     const j = store.newId("FB");
-    if (
-      !store.add("feedback", {
+    try {
+      await store.addAndWait("feedback", {
         id: j,
         createdAt: new Date().toISOString(),
         name: A.name.trim(),
@@ -61,9 +61,10 @@ export function FeedbackPage() {
         topic: A.topic,
         message: A.message.trim(),
         public: A.public,
-      })
-    ) {
-      setI("Could not send: browser storage is full or blocked.");
+        status: "pending",
+      });
+    } catch (error) {
+      setI(error.message);
       return;
     }
     setA_1({
@@ -102,12 +103,12 @@ export function FeedbackPage() {
               Thank you{a.name ? `, ${a.name}` : ""}!
             </h2>
             <p className="text-sm text-slate-500 mt-2">
-              Your feedback has been received. Reference:{" "}
+              Your feedback has been saved for review. Reference:{" "}
               <strong className="font-mono text-brand-700">{a.id}</strong>
             </p>
             {a.public && (
               <p className="text-xs text-slate-500 mt-1">
-                It now appears on our{" "}
+                After approval, it will appear on our{" "}
                 <Link
                   to="/reviews"
                   className="font-bold text-brand-700 hover:underline"

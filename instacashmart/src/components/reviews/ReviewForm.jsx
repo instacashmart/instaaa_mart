@@ -14,8 +14,8 @@ export function ReviewForm({ product, orderId, defaultName = "" }) {
     return (
       <div className="rounded-2xl border border-brand-200 bg-brand-50/50 p-4 text-left">
         <p className="text-xs font-bold text-brand-700">
-          <i className="fa-solid fa-heart" /> Thanks! Your review is now visible
-          to other shoppers.
+          <i className="fa-solid fa-heart" /> Thanks! Your review was submitted
+          for moderation.
         </p>
         <ul className="mt-3">
           <ProductReview review={a} />
@@ -23,14 +23,14 @@ export function ReviewForm({ product, orderId, defaultName = "" }) {
       </div>
     );
   }
-  const p = (H) => {
+  const p = async (H) => {
     H.preventDefault();
     if (!n) {
       setW("Please choose a star rating.");
       return;
     }
-    if (
-      !store.add("reviews", {
+    try {
+      await store.addAndWait("reviews", {
         id: store.newId("RV"),
         createdAt: new Date().toISOString(),
         productKey: productKey(product),
@@ -39,9 +39,10 @@ export function ReviewForm({ product, orderId, defaultName = "" }) {
         name: x.trim() || "Customer",
         rating: n,
         text: l.trim(),
-      })
-    ) {
-      setW("Could not save: browser storage is full or blocked.");
+        status: "pending",
+      });
+    } catch (error) {
+      setW(error.message);
     }
   };
   const u = f || n;
